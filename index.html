@@ -180,6 +180,18 @@
                         </div>
                     </div>
 
+                    <!-- Location (Bổ sung địa chỉ) -->
+                    <div class="flex items-center gap-4 bg-green-50 p-4 rounded-2xl">
+                        <div class="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center text-2xl shadow-sm">
+                            📍
+                        </div>
+                        <div>
+                            <p class="text-xs text-green-500 font-bold uppercase">Địa điểm</p>
+                            <p class="text-gray-800 font-bold text-lg">183/6b Nguyễn Hữu Cảnh</p>
+                            <p class="text-gray-500 text-sm">Bình Thạnh, TP.HCM</p>
+                        </div>
+                    </div>
+
                     <!-- Host Info -->
                     <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-2xl">
                         <div class="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center text-2xl shadow-sm">
@@ -245,8 +257,6 @@
 
     <script>
         // --- DỮ LIỆU KHÁCH MỜI ---
-        // Load ảnh từ thư mục images. Nếu bạn chạy file html này cục bộ không có thư mục images, 
-        // thuộc tính `onerror` trong thẻ img sẽ tự động tạo ảnh placeholder chữ.
         const guestsData = {
             'quynh': { name: 'Quỳnh Nguyễn', image: 'images/quynh-nguyen.jpg' },
             'thanhvien': { name: 'Thành Viên', image: 'images/thanh-vien.jpg' },
@@ -323,7 +333,6 @@
         }
 
         // --- HÀM PHÁT NHẠC HAPPY BIRTHDAY (SỬ DỤNG TONE.JS) ---
-        // Sử dụng Tone.js giúp file tự thân hoàn thiện 100% không cần tải MP3 bên ngoài
         let isPlaying = false;
         
         async function playHappyBirthday() {
@@ -333,20 +342,17 @@
             // Bắt buộc khởi động Audio Context sau thao tác của người dùng
             await Tone.start();
             
-            // Tạo một Synth (nhạc cụ) âm thanh dạng sóng sine nghe rất cute (như hộp nhạc)
             const synth = new Tone.Synth({
                 oscillator: { type: "sine" },
                 envelope: { attack: 0.05, decay: 0.2, sustain: 0.4, release: 1.5 }
             }).toDestination();
 
-            // Set âm lượng vừa phải
             synth.volume.value = -5;
 
             const now = Tone.now();
-            const BPM = 120; // Tốc độ bài hát
+            const BPM = 120; 
             const beat = 60 / BPM;
 
-            // Nốt nhạc Happy Birthday To You
             const notes = [
                 { note: "G4", duration: 0.5, time: 0 },
                 { note: "G4", duration: 0.5, time: 0.5 },
@@ -378,13 +384,10 @@
                 { note: "C5", duration: 2,   time: 23 }
             ];
 
-            // Đưa các nốt nhạc vào trình phát
             notes.forEach(n => {
-                // Rút ngắn thời gian nhấn nốt (duration * 0.8) để nghe nảy và dễ thương hơn
                 synth.triggerAttackRelease(n.note, (n.duration * beat * 0.8), now + (n.time * beat));
             });
 
-            // Đặt lại cờ sau khi phát xong để có thể phát lại
             setTimeout(() => {
                 isPlaying = false;
             }, 25 * beat * 1000);
