@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Thiệp Mời Sinh Nhật - Đỗ Thành Thụy</title>
+    
+    <!-- Fonts: Pacifico cho tiêu đề cute, Baloo 2 cho văn bản dễ thương -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS cho layout và responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'cute': ['"Baloo 2"', 'cursive'],
+                        'title': ['"Pacifico"', 'cursive'],
+                    },
+                    colors: {
+                        'pastel-pink': '#ffe4e6',
+                        'pastel-blue': '#e0f2fe',
+                        'pastel-yellow': '#fef08a',
+                        'primary-pink': '#ec4899',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Thư viện Confetti cho hiệu ứng pháo giấy -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Thư viện Tone.js để tạo nhạc Happy Birthday cute -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        body {
+            background-color: #fdf2f8;
+            background-image: radial-gradient(#fbcfe8 2px, transparent 2px);
+            background-size: 30px 30px;
+            font-family: 'Baloo 2', cursive;
+            overflow: hidden; /* Prevent scrolling for app-like feel */
+        }
+
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .pulse-cute {
+            animation: pulse-scale 2s infinite;
+        }
+
+        @keyframes pulse-scale {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Envelope and Card Transitions */
+        #welcome-screen {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        #card-screen {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8) translateY(50px);
+            transition: all 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy effect */
+        }
+
+        #card-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateY(0);
+        }
+
+        .hide {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(1.1) !important;
+        }
+
+        /* Photo border style */
+        .avatar-border {
+            box-shadow: 0 0 0 4px #fbcfe8, 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom Scrollbar cho thiệp dài */
+        .card-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .card-scroll::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        .card-scroll::-webkit-scrollbar-thumb {
+            background: #fbcfe8; 
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center relative">
+
+    <!-- Background Decorative Elements -->
+    <div class="absolute top-10 left-10 text-4xl floating" style="animation-delay: 0s;">🎈</div>
+    <div class="absolute top-20 right-10 text-4xl floating" style="animation-delay: 1s;">✨</div>
+    <div class="absolute bottom-20 left-16 text-4xl floating" style="animation-delay: 2s;">🎁</div>
+    <div class="absolute bottom-10 right-20 text-4xl floating" style="animation-delay: 1.5s;">🍰</div>
+
+    <!-- MÀN HÌNH CHỜ (CHỌN KHÁCH MỜI VÀ MỞ THIỆP) -->
+    <div id="welcome-screen" class="relative z-10 flex flex-col items-center justify-center w-full max-w-sm px-6">
+        <div class="bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-xl text-center w-full border-2 border-pink-200">
+            <h1 class="font-title text-4xl text-primary-pink mb-2">You're Invited!</h1>
+            <p class="text-gray-600 mb-2 text-lg">Đến dự sinh nhật của<br><b class="text-xl text-pink-500">Đỗ Thành Thụy</b></p>
+            
+            <!-- Khu vực hiển thị tên tự động từ Link -->
+            <div class="my-6 py-4 bg-pink-50 rounded-2xl border-2 border-pink-100 border-dashed">
+                <p class="text-sm font-bold text-pink-400 mb-1 uppercase tracking-wide">Thân gửi đến</p>
+                <h2 id="welcome-guest-name" class="text-2xl font-bold text-pink-600">Khách Mời</h2>
+            </div>
+
+            <button onclick="openCard()" class="pulse-cute w-full bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-bold py-4 rounded-2xl shadow-lg transform transition active:scale-95 text-xl flex items-center justify-center gap-2">
+                <span>Mở Thiệp Ngay</span>
+                <span>💌</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH THIỆP CHÍNH (THÔNG TIN CHI TIẾT) -->
+    <div id="card-screen" class="absolute inset-0 z-20 flex flex-col items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md max-h-[95vh] rounded-[2.5rem] shadow-2xl overflow-y-auto overflow-x-hidden relative border-4 border-white card-scroll">
+            
+            <!-- Header section with curve -->
+            <div class="bg-gradient-to-b from-pink-300 to-pink-100 pt-8 pb-16 px-6 text-center relative">
+                <h2 class="font-title text-3xl text-pink-700 drop-shadow-sm">Sinh Nhật 23 Tuổi!</h2>
+                <p class="text-pink-600 font-bold mt-1 text-lg">Của Đỗ Thành Thụy 🎂</p>
+                
+                <!-- Decorative curve bottom -->
+                <svg class="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0 120L60 105C120 90 240 60 360 55C480 50 600 70 720 75C840 80 960 70 1080 55C1200 40 1320 20 1380 10L1440 0V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" fill="white"/>
+                </svg>
+            </div>
+
+            <!-- Guest Info Section (Overlapping the curve) -->
+            <div class="flex flex-col items-center -mt-16 relative z-10 px-6">
+                <!-- Avatar khách mời -->
+                <div class="w-28 h-28 rounded-full bg-white p-1 avatar-border relative mb-3">
+                    <img id="guest-avatar" src="" alt="Guest Avatar" class="w-full h-full object-cover rounded-full" 
+                         onerror="this.src='https://placehold.co/400x400/ffe4e6/ec4899?text=' + encodeURIComponent(this.alt); this.onerror=null;">
+                </div>
+                
+                <p class="text-gray-500 text-sm font-semibold uppercase tracking-wider">Thân Mời</p>
+                <h3 id="guest-name-display" class="text-2xl font-bold text-gray-800 mb-6 text-center">Tên Khách Mời</h3>
+
+                <!-- Divider -->
+                <div class="w-full h-px bg-pink-100 mb-6 relative">
+                    <div class="absolute left-1/2 -translate-x-1/2 -top-3 bg-white px-2 text-pink-300">🎀</div>
+                </div>
+
+                <!-- Event Details -->
+                <div class="w-full space-y-4 mb-8">
+                    <!-- Time -->
+                    <div class="flex items-center gap-4 bg-pink-50 p-4 rounded-2xl">
+                        <div class="w-12 h-12 bg-pink-200 rounded-xl flex items-center justify-center text-2xl shadow-sm">
+                            ⏰
+                        </div>
+                        <div>
+                            <p class="text-xs text-pink-500 font-bold uppercase">Thời gian dự tiệc</p>
+                            <p class="text-gray-800 font-bold text-lg">Thứ 5, 22/10/2026</p>
+                            <p class="text-gray-500 text-sm">Vào lúc 18:00 Tối</p>
+                        </div>
+                    </div>
+
+                    <!-- Host Info -->
+                    <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-2xl">
+                        <div class="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center text-2xl shadow-sm">
+                            👑
+                        </div>
+                        <div>
+                            <p class="text-xs text-blue-500 font-bold uppercase">Chủ Tiệc</p>
+                            <p class="text-gray-800 font-bold text-lg">Đỗ Thành Thụy</p>
+                            <p class="text-gray-500 text-sm">Sinh ngày 23/10/2003</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BỔ SUNG: Phần Thực Đơn -->
+                <div class="w-full mb-8">
+                    <div class="flex items-center justify-center gap-2 mb-4">
+                        <span class="text-xl">🍽️</span>
+                        <h4 class="font-title text-2xl text-pink-600 text-center drop-shadow-sm">Thực Đơn Nhâm Nhi</h4>
+                        <span class="text-xl">🥂</span>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-pink-50 to-white rounded-2xl p-4 border border-pink-100 shadow-sm space-y-3">
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-50">
+                            <div class="w-8 h-8 shrink-0 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold shadow-inner text-sm">1</div>
+                            <span class="text-gray-700 font-semibold">Gỏi rau tiến vua tôm thịt</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-50">
+                            <div class="w-8 h-8 shrink-0 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold shadow-inner text-sm">2</div>
+                            <span class="text-gray-700 font-semibold">Gà hấp cải thìa nấm đông cô</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-50">
+                            <div class="w-8 h-8 shrink-0 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold shadow-inner text-sm">3</div>
+                            <span class="text-gray-700 font-semibold">Bò lúc lắc & khoai tây chiên</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-50">
+                            <div class="w-8 h-8 shrink-0 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold shadow-inner text-sm">4</div>
+                            <span class="text-gray-700 font-semibold">Ếch chiên nước mắm</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-50">
+                            <div class="w-8 h-8 shrink-0 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold shadow-inner text-sm">5</div>
+                            <span class="text-gray-700 font-semibold">Lẩu thái hải sản</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-50">
+                            <div class="w-8 h-8 shrink-0 rounded-full bg-pink-200 flex items-center justify-center text-pink-700 font-bold shadow-inner text-sm">6</div>
+                            <span class="text-gray-700 font-semibold">Tráng miệng rau câu</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- KẾT THÚC: Phần Thực Đơn -->
+            </div>
+            
+            <!-- Bottom Action -->
+            <div class="bg-gray-50 p-4 text-center">
+                <p class="text-sm text-gray-500 italic mb-2">Sự hiện diện của bạn là món quà to lớn nhất!</p>
+            </div>
+        </div>
+        
+        <!-- Replay music button (hidden initially) -->
+        <button onclick="playHappyBirthday()" class="mt-6 bg-white/80 backdrop-blur-sm text-pink-500 px-6 py-2 rounded-full shadow-md font-bold text-sm hover:bg-pink-50 transition">
+            🎵 Phát lại nhạc
+        </button>
+    </div>
+
+    <script>
+        // --- DỮ LIỆU KHÁCH MỜI ---
+        // Load ảnh từ thư mục images. Nếu bạn chạy file html này cục bộ không có thư mục images, 
+        // thuộc tính `onerror` trong thẻ img sẽ tự động tạo ảnh placeholder chữ.
+        const guestsData = {
+            'quynh': { name: 'Quỳnh Nguyễn', image: 'images/quynh-nguyen.jpg' },
+            'thanhvien': { name: 'Thành Viên', image: 'images/thanh-vien.jpg' },
+            'linh': { name: 'Linh', image: 'images/linh.jpg' },
+            'khac': { name: 'Bạn Hiền', image: 'images/khach.jpg' }
+        };
+
+        // Biến lưu trữ khách mời hiện tại
+        let currentGuest = guestsData['khac']; // Mặc định nếu link không có tham số
+
+        // --- KHỞI TẠO KHI TẢI TRANG ---
+        window.onload = function() {
+            // Lấy tham số 'guest' từ trên đường link (vd: ?guest=quynh)
+            const urlParams = new URLSearchParams(window.location.search);
+            const guestId = urlParams.get('guest');
+
+            // Nếu tìm thấy id trong danh sách, cập nhật tên người nhận
+            if (guestId && guestsData[guestId]) {
+                currentGuest = guestsData[guestId];
+            }
+
+            // Hiển thị tên ra ngoài màn hình chờ
+            document.getElementById('welcome-guest-name').innerText = currentGuest.name;
+        };
+
+        // --- HÀM MỞ THIỆP & XỬ LÝ GIAO DIỆN ---
+        async function openCard() {
+            // 1. Lấy thông tin khách mời đã được tự động xác định từ Link
+            const guest = currentGuest;
+            
+            // Cập nhật giao diện thiệp bên trong
+            const avatarImg = document.getElementById('guest-avatar');
+            avatarImg.src = guest.image;
+            avatarImg.alt = guest.name; // Phục vụ cho ảnh fallback
+            document.getElementById('guest-name-display').innerText = guest.name;
+
+            // 2. Chuyển đổi màn hình (Animation)
+            document.getElementById('welcome-screen').classList.add('hide');
+            
+            setTimeout(() => {
+                const cardScreen = document.getElementById('card-screen');
+                cardScreen.classList.add('active');
+                
+                // Bắn pháo giấy
+                shootConfetti();
+                
+                // Phát nhạc
+                playHappyBirthday();
+            }, 400); // Đợi màn hình welcome mờ đi
+        }
+
+        // --- HÀM BẮN PHÁO GIẤY CUTE ---
+        function shootConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                // Bắn từ 2 bên
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+
+        // --- HÀM PHÁT NHẠC HAPPY BIRTHDAY (SỬ DỤNG TONE.JS) ---
+        // Sử dụng Tone.js giúp file tự thân hoàn thiện 100% không cần tải MP3 bên ngoài
+        let isPlaying = false;
+        
+        async function playHappyBirthday() {
+            if(isPlaying) return;
+            isPlaying = true;
+
+            // Bắt buộc khởi động Audio Context sau thao tác của người dùng
+            await Tone.start();
+            
+            // Tạo một Synth (nhạc cụ) âm thanh dạng sóng sine nghe rất cute (như hộp nhạc)
+            const synth = new Tone.Synth({
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.4, release: 1.5 }
+            }).toDestination();
+
+            // Set âm lượng vừa phải
+            synth.volume.value = -5;
+
+            const now = Tone.now();
+            const BPM = 120; // Tốc độ bài hát
+            const beat = 60 / BPM;
+
+            // Nốt nhạc Happy Birthday To You
+            const notes = [
+                { note: "G4", duration: 0.5, time: 0 },
+                { note: "G4", duration: 0.5, time: 0.5 },
+                { note: "A4", duration: 1,   time: 1 },
+                { note: "G4", duration: 1,   time: 2 },
+                { note: "C5", duration: 1,   time: 3 },
+                { note: "B4", duration: 2,   time: 4 },
+
+                { note: "G4", duration: 0.5, time: 6 },
+                { note: "G4", duration: 0.5, time: 6.5 },
+                { note: "A4", duration: 1,   time: 7 },
+                { note: "G4", duration: 1,   time: 8 },
+                { note: "D5", duration: 1,   time: 9 },
+                { note: "C5", duration: 2,   time: 10 },
+
+                { note: "G4", duration: 0.5, time: 12 },
+                { note: "G4", duration: 0.5, time: 12.5 },
+                { note: "G5", duration: 1,   time: 13 },
+                { note: "E5", duration: 1,   time: 14 },
+                { note: "C5", duration: 1,   time: 15 },
+                { note: "B4", duration: 1,   time: 16 },
+                { note: "A4", duration: 1.5, time: 17 },
+
+                { note: "F5", duration: 0.5, time: 19 },
+                { note: "F5", duration: 0.5, time: 19.5 },
+                { note: "E5", duration: 1,   time: 20 },
+                { note: "C5", duration: 1,   time: 21 },
+                { note: "D5", duration: 1,   time: 22 },
+                { note: "C5", duration: 2,   time: 23 }
+            ];
+
+            // Đưa các nốt nhạc vào trình phát
+            notes.forEach(n => {
+                // Rút ngắn thời gian nhấn nốt (duration * 0.8) để nghe nảy và dễ thương hơn
+                synth.triggerAttackRelease(n.note, (n.duration * beat * 0.8), now + (n.time * beat));
+            });
+
+            // Đặt lại cờ sau khi phát xong để có thể phát lại
+            setTimeout(() => {
+                isPlaying = false;
+            }, 25 * beat * 1000);
+        }
+    </script>
+</body>
+</html>
