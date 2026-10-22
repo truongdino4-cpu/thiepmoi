@@ -205,6 +205,29 @@
                     </div>
                 </div>
 
+                <!-- BỔ SUNG: Đồng hồ đếm ngược -->
+                <div class="w-full mb-8">
+                    <h4 class="font-title text-xl text-pink-500 text-center mb-4">Đếm ngược đến giờ G ⏰</h4>
+                    <div class="flex justify-center gap-3 text-center">
+                        <div class="bg-pink-100 rounded-xl p-2 w-16 shadow-sm border border-pink-200">
+                            <p id="cd-days" class="text-2xl font-bold text-pink-600">00</p>
+                            <p class="text-[10px] text-pink-500 uppercase font-bold">Ngày</p>
+                        </div>
+                        <div class="bg-blue-100 rounded-xl p-2 w-16 shadow-sm border border-blue-200">
+                            <p id="cd-hours" class="text-2xl font-bold text-blue-600">00</p>
+                            <p class="text-[10px] text-blue-500 uppercase font-bold">Giờ</p>
+                        </div>
+                        <div class="bg-yellow-100 rounded-xl p-2 w-16 shadow-sm border border-yellow-200">
+                            <p id="cd-minutes" class="text-2xl font-bold text-yellow-600">00</p>
+                            <p class="text-[10px] text-yellow-600 uppercase font-bold">Phút</p>
+                        </div>
+                        <div class="bg-green-100 rounded-xl p-2 w-16 shadow-sm border border-green-200">
+                            <p id="cd-seconds" class="text-2xl font-bold text-green-600">00</p>
+                            <p class="text-[10px] text-green-500 uppercase font-bold">Giây</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- BỔ SUNG: Phần Thực Đơn -->
                 <div class="w-full mb-8">
                     <div class="flex items-center justify-center gap-2 mb-4">
@@ -280,7 +303,39 @@
 
             // Hiển thị tên ra ngoài màn hình chờ
             document.getElementById('welcome-guest-name').innerText = currentGuest.name;
+            
+            // Khởi động đồng hồ đếm ngược
+            startCountdown();
         };
+
+        // --- HÀM ĐẾM NGƯỢC THỜI GIAN ---
+        function startCountdown() {
+            // Cài đặt thời gian đích là 19:00 ngày 22/10/2026
+            const targetDate = new Date("2026-10-22T19:00:00").getTime();
+
+            const timer = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+
+                // Nếu đã qua thời gian tiệc, dừng đếm ngược
+                if (distance < 0) {
+                    clearInterval(timer);
+                    return; 
+                }
+
+                // Tính toán ngày, giờ, phút, giây
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Cập nhật giao diện (thêm số 0 đằng trước nếu nhỏ hơn 10)
+                document.getElementById("cd-days").innerText = days < 10 ? "0" + days : days;
+                document.getElementById("cd-hours").innerText = hours < 10 ? "0" + hours : hours;
+                document.getElementById("cd-minutes").innerText = minutes < 10 ? "0" + minutes : minutes;
+                document.getElementById("cd-seconds").innerText = seconds < 10 ? "0" + seconds : seconds;
+            }, 1000);
+        }
 
         // --- HÀM MỞ THIỆP & XỬ LÝ GIAO DIỆN ---
         async function openCard() {
